@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Info Type="StartUp" Visible="0" Icon="" File="startup_files/bus_objects.m" Name="bus_objects">
+    <Extension Value="bf93de0e-8967-46e1-bfc9-744a694fffc6" Name="StartUpPrev"/>
+</Info>
