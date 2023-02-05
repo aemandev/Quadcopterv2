@@ -1,7 +1,7 @@
 airframe = struct();
 
-g = 9.81;
-rho = 1.1;
+g = Simulink.Parameter(single(9.81));
+rho = Simulink.Parameter(single(1.1));
 
 % Airframe System Specifications
 % airframe = struct();
