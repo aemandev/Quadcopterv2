@@ -1,1 +1,14 @@
 # List of untracked files to ignore
+References
+/References
+*.mat
+*.pyc
+geometry_msgs
++bus_conv_fcns
+matlab_msg_gen_ros1
+mavros_msgs
+MessaggiROS
+sensor_msgs
+trajectory_msgs
+mav_msgs
+support
