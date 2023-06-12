@@ -256,21 +256,21 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
         # Predict
         state_estimator.predict(dt, fx=fx, w=gyro)
         # Update
-        if accel_mag > 9.0 and accel_mag < 11.0:
-            z_acc, z_acc_measure = state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0.01,0.01,0.01]))
-            z_acc_mat = np.vstack([z_acc_mat,z_acc])
-            z_acc_measure_mat = np.vstack([z_acc_measure_mat,z_acc_measure])
-        # Update mag
-        z_mag, z_mag_measure = state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
-        z_mag_mat = np.vstack([z_mag_mat,z_mag])
-        z_mag_measure_mat = np.vstack([z_mag_measure_mat,z_mag_measure])
+        # if accel_mag > 9.0 and accel_mag < 11.0:
+        #     z_acc, z_acc_measure = state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0.01,0.01,0.01]))
+        #     z_acc_mat = np.vstack([z_acc_mat,z_acc])
+        #     z_acc_measure_mat = np.vstack([z_acc_measure_mat,z_acc_measure])
+        # # Update mag
+        # z_mag, z_mag_measure = state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
+        # z_mag_mat = np.vstack([z_mag_mat,z_mag])
+        # z_mag_measure_mat = np.vstack([z_mag_measure_mat,z_mag_measure])
 
         true_r, true_p, true_y = euler_from_quaternion(true_att)
         true_mat = np.vstack([true_mat,np.array([true_r,true_p,true_y])])
         [r, p, y] = euler_from_quaternion(state_estimator.x[0:4])
         approx_att = np.vstack([approx_att, np.array([r, p, y])])
         w_out = np.vstack([w_out,state_estimator.x[4::]])
-        if len(true_mat) > 1320:
+        if len(true_mat) > 3000:
             break
 # acc_cov = np.cov(acc_save.T)
 
