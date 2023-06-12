@@ -12,3 +12,5 @@ sensor_msgs
 trajectory_msgs
 mav_msgs
 support
+
+*.csv
