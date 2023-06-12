@@ -212,6 +212,7 @@ class UKF:
         self.z = copy.deepcopy(z)
         self.x_post = self.x.copy()
         self.P_post = self.P.copy()
+        return z, z_
 
 
     def compute_process_sigmas(self, dt, fx=None, **fx_args):

@@ -20,6 +20,60 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 
+# def plot_sensor_data():
+# # create a new plotly figure subplot with two rows. Name the plots "Accel Data" and "Gyro Data"
+# # fig = make_subplots(
+# #     rows=2, cols=1,
+# #     subplot_titles=("Accel Data", "Gyro Data"), shared_xaxes=True)
+
+# # # plot accel data vs time
+# # fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=acc_save[:,0],name='Accel X',marker=dict(color='red',size=4),
+# #                             legendgroup='Accel',legendgrouptitle=dict(text='Accel')),row=1,col=1)
+# # fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=acc_save[:,1],name='Accel Y',marker=dict(color='green',size=4),
+# #                             legendgroup='Accel',legendgrouptitle=dict(text='Accel')),row=1,col=1)
+# # fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=acc_save[:,2],name='Accel Z',marker=dict(color='blue',size=4),
+# #                             legendgroup='Accel',legendgrouptitle=dict(text='Accel')),row=1,col=1)
+
+# # # Do the same for gyro data
+# # fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=w_stack[:,0],name='Gyro X',marker=dict(color='red',size=4),
+# #                             legendgroup='Gyro',legendgrouptitle=dict(text='Gyro')),row=2,col=1)
+# # fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=w_stack[:,1],name='Gyro Y',marker=dict(color='green',size=4),
+# #                             legendgroup='Gyro',legendgrouptitle=dict(text='Gyro')),row=2,col=1)
+# # # Label the axes
+# # fig.update_xaxes(title_text="Time (s)", row=1, col=1)
+# # fig.update_xaxes(title_text="Time (s)", row=2, col=1)
+# # fig.update_yaxes(title_text="Accel (m/s^2)", row=1, col=1)
+# # fig.update_yaxes(title_text="Gyro (rad/s)", row=2, col=1)
+# # fig.show()
+
+
+
+def plot_innovation(t_mat, z,z_):
+    # make a plot with 3 subplots
+    fig = make_subplots(
+        rows=3, cols=1,
+        subplot_titles=("x", "y", "z"), shared_xaxes=True)
+    fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=z[:,0],name='x Real',marker=dict(color='red',size=4),
+                            legendgroup='x',legendgrouptitle=dict(text='x')),row=1,col=1)
+    fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=z_[:,0],name='x Est', marker=dict(color='black'),
+    legendgroup='x',legendgrouptitle=dict(text='x')),row=1,col=1)
+    # Label x axis time and y axis roll
+    fig.update_xaxes(title_text="Time (s)", row=1, col=1)
+    
+    fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=z[:,1],name='y Real', marker=dict(color='red',size=4),
+                            legendgroup='y',legendgrouptitle=dict(text='y')),row=2,col=1)
+    fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=z_[:,1],name='y Est', marker=dict(color='black'),
+                            legendgroup='y',legendgrouptitle=dict(text='y')),row=2,col=1)
+    # Label x axis time and y axis pitch
+    fig.update_xaxes(title_text="Time (s)", row=2, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=z[:,2],name='z Real', marker=dict(color='red',size=4),
+                            legendgroup='z',legendgrouptitle=dict(text='z')),row=3,col=1)
+    fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=z_[:,2],name='z Est', marker=dict(color='black'),
+                            legendgroup='z',legendgrouptitle=dict(text='z')),row=3,col=1)
+    # Label x axis time and y axis yaw
+    fig.update_xaxes(title_text="Time (s)", row=3, col=1)
+    fig.show()
 
 
 def euler_from_quaternion(q):
@@ -92,19 +146,19 @@ def H_accel(x, v):
     return q.quatProd(g_prime.quatProd(q.conj()))
 
 
+# def H_mag(x, b, v):
+#     q = Quaternion(x[0:4]) 
+#     g = b + v 
+#     g_prime = Quaternion(np.concatenate([np.array([0]),g]))
+
+#     return q.quatProd(g_prime.quatProd(q.conj()))
+
 def H_mag(x, b, v):
     q = Quaternion(x[0:4]) 
     g = b + v 
     g_prime = Quaternion(np.concatenate([np.array([0]),g]))
 
     return q.quatProd(g_prime.quatProd(q.conj()))
-
-
-# def H_mag(x, b, v):
-#     q = x[0:4]
-#     g_prime = qut_rot(q, b)
-#     z_mag = g_prime + v
-#     return z_mag
 
 def hx(qin,w):
     qin = Quaternion(qin)
@@ -120,17 +174,20 @@ w0 = np.array([0, 0, 0])
 x0 = np.concatenate((q0, w0))
 
 # These work but I cant say if the update step is doing much
-Q0 = np.diag(np.concatenate([np.array([.01,.01,.01])*1E-3,np.array([1,1,1])*1E10]))
-R = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
-R_mag = np.diag(np.concatenate([np.array([.1,.1,.1])*1E-2,np.array([1,1,1])*1E-11]))
+Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.01])*1E-5,np.array([1,1,1])*1E10]))
+R = np.diag(np.concatenate([np.array([1.22E-04,1.86E-03,3.03E-1]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
+# R = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
+# R_mag = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
+R_mag = np.diag(np.concatenate([np.array([3.87E-1,9.11E-1,2.73E-06]),np.array([1,1,1])*1E-11]))
+
 
 # Q0 = np.diag(np.concatenate([np.array([1,50,1])*1E-8,np.array([1,1,1])*1E-6]))
 # R = np.diag(np.concatenate([np.array([1E-5,1,1])*1E3,np.array([1,1,1])*1E-11]))
 # R_mag = np.diag(np.concatenate([np.array([1,1,1])*1E5,np.array([1,1,1])*1]))
 # Q0 = np.identity(6) * 0.001
-P0 = np.eye(6)*1E0
-alpha = 0.04
-K = 0
+P0 = np.eye(6)*1E-4
+alpha = 0.1
+K = -1
 beta = 2.0
 
 
@@ -143,29 +200,22 @@ w_q = np.array([0.1, 0.1, 0.1])
 w_w = np.array([0.1, 0.1, 0.1])
 w__k = np.vstack((w_q, w_w))
 
-# Process noise covariance matrix, Q_q
-# Q_q = np.zeros(3,3)
-
-# Need 3 measurement models -> zrot, zacc, zmag
-# Since w_k is already part of the prediction step...
-
-# data = pd.read_csv('flights.csv')
 true_mat = np.array([0,0,0])
 approx_att = np.array([0,0,0])
+w_out = np.array([0,0,0])
+mag_out = np.array([0,0,0])
 t_mat = np.array([0])
+z_acc_mat = np.array([0,0,0,0,0,0])
+z_mag_mat = np.array([0,0,0,0,0,0]) 
+z_acc_measure_mat = np.array([0,0,0,0,0,0])
+z_mag_measure_mat = np.array([0,0,0,0,0,0])
 
 data = pd.read_csv('TStick_Test08_Trial3.csv')
 
-
-
-#  # measurements
-# for z in zs:
-#     kf.predict()
-#     kf.update(z)
-#     print(kf.x, 'log-likelihood', kf.log_likelihood)
-
 acc_save = np.array([0,0,9.81])
 w_stack = np.array([0,0,0])
+
+
 with open('TStick_Test08_Trial3.csv') as csvfile:
     reader = csv.reader(csvfile)
     next(reader)
@@ -177,7 +227,8 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
             # Write code to split row into a list of ints
             quaternion = np.array([data[1], data[2], data[3], data[4]])  # Initial estimate of the quaternion
             bias = np.array([data[8],data[9],data[10]])
-            mag_0 = np.asarray([data[11],data[12],data[13]])
+            mag_0 = -np.asarray([data[11],0,-data[13]])
+            mag_0 = mag_0 / np.linalg.norm(mag_0)
             x0 = np.concatenate((quaternion, bias)).transpose()
             # pass all the parameters into the UKF!
             # number of state variables, process noise, initial state, initial coariance, three tuning paramters, and the iterate function
@@ -191,13 +242,14 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
         dt = cur_time-last_time
         true_att = np.asarray([data[1], data[2], data[3], data[4]])
         gyro = np.asarray([data[8],data[9],data[10]])
-        accel_measure = np.asarray([data[5],data[6],data[7]])
+        accel_measure = np.asarray([-data[5],-data[6],data[7]])
         mag_measure = np.asarray([data[11],data[12],data[13]])
         # Take the norm of the magnetometer measurement
-        # mag_measure = mag_measure / np.linalg.norm(mag_measure)            
+        mag_measure = mag_measure / np.linalg.norm(mag_measure)            
 
         acc_save = np.vstack([acc_save,accel_measure])
         w_stack = np.vstack([w_stack,gyro])
+        mag_out = np.vstack([mag_out,mag_measure])
         accel_mag = (accel_measure[0] ** 2 + accel_measure[1] ** 2 + accel_measure[2] ** 2) ** 0.5
         acc_data = accel_measure / accel_mag
         last_time = cur_time
@@ -205,18 +257,23 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
         # Predict
         state_estimator.predict(dt, fx=fx, w=gyro)
         # Update
-        state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0,0,0]))
-        # Update mag
-        state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
-
+        if accel_mag > 9.0 and accel_mag < 11.0:
+            z_acc, z_acc_measure = state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0.01,0.01,0.01]))
+            z_acc_mat = np.vstack([z_acc_mat,z_acc])
+            z_acc_measure_mat = np.vstack([z_acc_measure_mat,z_acc_measure])
+        # # Update mag
+        z_mag, z_mag_measure = state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
+        z_mag_mat = np.vstack([z_mag_mat,z_mag])
+        z_mag_measure_mat = np.vstack([z_mag_measure_mat,z_mag_measure])
 
         true_r, true_p, true_y = euler_from_quaternion(true_att)
         true_mat = np.vstack([true_mat,np.array([true_r,true_p,true_y])])
         [r, p, y] = euler_from_quaternion(state_estimator.x[0:4])
         approx_att = np.vstack([approx_att, np.array([r, p, y])])
-        if len(true_mat) > 1338:
+        w_out = np.vstack([w_out,state_estimator.x[4::]])
+        if len(true_mat) > 1320:
             break
-
+# acc_cov = np.cov(acc_save.T)
 
 fig = make_subplots(
     rows=3, cols=1,
@@ -226,6 +283,10 @@ fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=true_mat[:,0],name=
 fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=approx_att[:,0],name='Roll Est', marker=dict(color='black'),
 legendgroup='Roll',legendgrouptitle=dict(text='Roll')),row=1,col=1)
 
+# Show the difference between the two
+# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=true_mat[:,0]-approx_att[:,0],name='Roll Error', marker=dict(color='blue'),
+# legendgroup='Roll',legendgrouptitle=dict(text='Roll')),row=1,col=1)
+
 # Label x axis time and y axis roll
 fig.update_xaxes(title_text="Time (s)", row=1, col=1)
 
@@ -233,6 +294,10 @@ fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=true_mat[:,1],name=
                          legendgroup='Pitch',legendgrouptitle=dict(text='Pitch')),row=2,col=1)
 fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=approx_att[:,1],name='Pitch Est', marker=dict(color='black'),
                          legendgroup='Pitch',legendgrouptitle=dict(text='Pitch')),row=2,col=1)
+# Show th difference between the two
+# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=true_mat[:,1]-approx_att[:,1],name='Pitch Error', marker=dict(color='blue'),
+#                             legendgroup='Pitch',legendgrouptitle=dict(text='Pitch')),row=2,col=1)
+
 # Label x axis time and y axis pitch
 fig.update_xaxes(title_text="Time (s)", row=2, col=1)
 
@@ -240,32 +305,14 @@ fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=true_mat[:,2],name=
                          legendgroup='Yaw',legendgrouptitle=dict(text='Yaw')),row=3,col=1)
 fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=approx_att[:,2],name='Yaw Est', marker=dict(color='black'),
                          legendgroup='Yaw',legendgrouptitle=dict(text='Yaw')),row=3,col=1)
+# # Show the difference between the two
+# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=true_mat[:,2]-approx_att[:,2],name='Yaw Error', marker=dict(color='blue'),
+#                             legendgroup='Yaw',legendgrouptitle=dict(text='Yaw')),row=3,col=1)
 # Label x axis time and y axis yaw
 fig.update_xaxes(title_text="Time (s)", row=3, col=1)
 fig.show()
 
 
-# # create a new plotly figure subplot with two rows. Name the plots "Accel Data" and "Gyro Data"
-# fig = make_subplots(
-#     rows=2, cols=1,
-#     subplot_titles=("Accel Data", "Gyro Data"), shared_xaxes=True)
+plot_innovation(t_mat, z_acc_mat,z_acc_measure_mat)
+# plot_innovation(t_mat, z_mag_mat,z_mag_measure_mat)
 
-# # plot accel data vs time
-# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=acc_save[:,0],name='Accel X',marker=dict(color='red',size=4),
-#                             legendgroup='Accel',legendgrouptitle=dict(text='Accel')),row=1,col=1)
-# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=acc_save[:,1],name='Accel Y',marker=dict(color='green',size=4),
-#                             legendgroup='Accel',legendgrouptitle=dict(text='Accel')),row=1,col=1)
-# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=acc_save[:,2],name='Accel Z',marker=dict(color='blue',size=4),
-#                             legendgroup='Accel',legendgrouptitle=dict(text='Accel')),row=1,col=1)
-
-# # Do the same for gyro data
-# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=w_stack[:,0],name='Gyro X',marker=dict(color='red',size=4),
-#                             legendgroup='Gyro',legendgrouptitle=dict(text='Gyro')),row=2,col=1)
-# fig.add_trace(go.Scatter(mode='lines+markers',x=t_mat[:,0],y=w_stack[:,1],name='Gyro Y',marker=dict(color='green',size=4),
-#                             legendgroup='Gyro',legendgrouptitle=dict(text='Gyro')),row=2,col=1)
-# # Label the axes
-# fig.update_xaxes(title_text="Time (s)", row=1, col=1)
-# fig.update_xaxes(title_text="Time (s)", row=2, col=1)
-# fig.update_yaxes(title_text="Accel (m/s^2)", row=1, col=1)
-# fig.update_yaxes(title_text="Gyro (rad/s)", row=2, col=1)
-# fig.show()
