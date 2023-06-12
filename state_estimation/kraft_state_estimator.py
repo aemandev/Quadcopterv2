@@ -115,21 +115,29 @@ def vec2quat(vec, dt=[]):
         q_new[np.isnan(q_new)] = 0
         return q_new / np.linalg.norm(q_new)
 
-def fx(x, dt, w):
+def fx(x, dt, w, acc):
+    # x: State vector; [q, w, r, v]
+    # dt: Time step
+
     # Does not even have to be the same dim as x0
     q = Quaternion(x[0:4])
-
-    # w_q = w__k[0:3]
-    # w_w = w__k[3:7]
-
+    r = x[6:9]
+    v = x[9:12]
+    
     # Calculate angle and axis
     q_delta = vec2quat(w, dt)
 
     q_disturbed = Quaternion(q.quatProd(q_delta))
-    w_disturbed = x[4::] + w
+    w_disturbed = x[4:7] + w
 
+    # Concatenate a 0 to the beginning of the the g vector
+    acc_prime = Quaternion(np.concatenate([np.array([0]), acc]))
+    acc_body = np.array(q.quatProd(acc_prime.q)[1::])
+    
+    v_disturbed = v + acc_body*dt
+    r_disturbed =  r + v*dt + .5*acc_body*dt**2
 
-    x_k1 = np.concatenate((q_disturbed.q, w_disturbed))
+    x_k1 = np.concatenate((q_disturbed.q, w_disturbed, v_disturbed, r_disturbed))
     return x_k1
 
 def H_gyro(x, v):
@@ -171,27 +179,24 @@ def hx(qin,w):
 # Causes conflicts with concept of Kalman Filter and how now is treated
 q0 = np.array([1, 0, 0, 0])
 w0 = np.array([0, 0, 0])
-x0 = np.concatenate((q0, w0))
+r0 = np.array([0, 0, 0])
+v0 = np.array([0, 0, 0])
+x0 = np.concatenate((q0, w0, r0, v0))
 
-# Innovation is small.. but estimat diverges
-# Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.001])*1E-5,np.array([1,1,1])*1E10]))
-# R = np.diag(np.concatenate([np.array([1.22E-04,1.86E-03,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
+# For attitude only
+# Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.5])*1E-5,np.array([1,1,1])*1E10]))
+# R = np.diag(np.concatenate([np.array([1.22E-02,5.86E-04,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
+# R_mag = np.diag(np.concatenate([np.array([3.87E-2,3.87E-2,2.73E-06]),np.array([1,1,1])*1E-11]))
 
-Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.5])*1E-5,np.array([1,1,1])*1E10]))
+Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.5])*1E-5,np.array([1,1,1])*1E4, np.array([1.1,1.01,.5])*1E2, np.array([1.1,1.01,.5])*1E2]))
 R = np.diag(np.concatenate([np.array([1.22E-02,5.86E-04,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
-
-# R = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
-# R_mag = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
 R_mag = np.diag(np.concatenate([np.array([3.87E-2,3.87E-2,2.73E-06]),np.array([1,1,1])*1E-11]))
 
-P0 = np.eye(6)*1E-4
+P0 = np.eye(12)*1E-4
 alpha = 0.1
 K = -1
 beta = 2.0
 
-
-# UKF(np.identity(7) * 0.001, x0, 0.01 * np.eye(7), alpha, K, beta, iterate_x)
-# --------------------READY FOR MESUREMENT UPDATE CODE-------------------
 
 # Initial process noise vector. Vector has 6 states because there are only 6 degrees of freedom because
 # the quaternion states are normalized. Will need to convert w_q into a quaternion to add it to the quat est
@@ -228,7 +233,7 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
             bias = np.array([data[8],data[9],data[10]])
             mag_0 = -np.asarray([data[11],0,-data[13]])
             mag_0 = mag_0 / np.linalg.norm(mag_0)
-            x0 = np.concatenate((quaternion, bias)).transpose()
+            x0 = np.concatenate((quaternion, bias, np.array([0.1,0.1,0.1]), np.array([0.001,0.001,0.001]))).transpose()
             # pass all the parameters into the UKF!
             # number of state variables, process noise, initial state, initial coariance, three tuning paramters, and the iterate function
             state_estimator = UKF(x0, P0, Q0, alpha, K, beta, fx, H_accel, x_mean_fn=None, z_mean_fn=None)
@@ -254,23 +259,24 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
         last_time = cur_time
 
         # Predict
-        state_estimator.predict(dt, fx=fx, w=gyro)
+        state_estimator.predict(dt, fx=fx, w=gyro, acc=accel_measure)
         # Update
-        # if accel_mag > 9.0 and accel_mag < 11.0:
-        #     z_acc, z_acc_measure = state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0.01,0.01,0.01]))
-        #     z_acc_mat = np.vstack([z_acc_mat,z_acc])
-        #     z_acc_measure_mat = np.vstack([z_acc_measure_mat,z_acc_measure])
-        # # Update mag
-        # z_mag, z_mag_measure = state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
-        # z_mag_mat = np.vstack([z_mag_mat,z_mag])
-        # z_mag_measure_mat = np.vstack([z_mag_measure_mat,z_mag_measure])
+        if accel_mag > 9.0 and accel_mag < 11.0:
+            z_acc, z_acc_measure = state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0.01,0.01,0.01]))
+            z_acc_mat = np.vstack([z_acc_mat,z_acc])
+            z_acc_measure_mat = np.vstack([z_acc_measure_mat,z_acc_measure])
+        # Update mag
+        z_mag, z_mag_measure = state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
+        z_mag_mat = np.vstack([z_mag_mat,z_mag])
+        z_mag_measure_mat = np.vstack([z_mag_measure_mat,z_mag_measure])
 
         true_r, true_p, true_y = euler_from_quaternion(true_att)
         true_mat = np.vstack([true_mat,np.array([true_r,true_p,true_y])])
         [r, p, y] = euler_from_quaternion(state_estimator.x[0:4])
         approx_att = np.vstack([approx_att, np.array([r, p, y])])
-        w_out = np.vstack([w_out,state_estimator.x[4::]])
-        if len(true_mat) > 3000:
+        w_out = np.vstack([w_out,state_estimator.x[4:7]])
+        print(state_estimator.x[7::])
+        if len(true_mat) > 100:
             break
 # acc_cov = np.cov(acc_save.T)
 
