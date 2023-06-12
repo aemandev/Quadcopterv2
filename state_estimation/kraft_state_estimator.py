@@ -173,18 +173,17 @@ q0 = np.array([1, 0, 0, 0])
 w0 = np.array([0, 0, 0])
 x0 = np.concatenate((q0, w0))
 
-# These work but I cant say if the update step is doing much
-Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.01])*1E-5,np.array([1,1,1])*1E10]))
-R = np.diag(np.concatenate([np.array([1.22E-04,1.86E-03,3.03E-1]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
+# Innovation is small.. but estimat diverges
+# Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.001])*1E-5,np.array([1,1,1])*1E10]))
+# R = np.diag(np.concatenate([np.array([1.22E-04,1.86E-03,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
+
+Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.5])*1E-5,np.array([1,1,1])*1E10]))
+R = np.diag(np.concatenate([np.array([1.22E-02,5.86E-04,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
+
 # R = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
 # R_mag = np.diag(np.concatenate([np.array([.1,.1,.1])*1E1,np.array([1,1,1])*1E-11]))
-R_mag = np.diag(np.concatenate([np.array([3.87E-1,9.11E-1,2.73E-06]),np.array([1,1,1])*1E-11]))
+R_mag = np.diag(np.concatenate([np.array([3.87E-2,3.87E-2,2.73E-06]),np.array([1,1,1])*1E-11]))
 
-
-# Q0 = np.diag(np.concatenate([np.array([1,50,1])*1E-8,np.array([1,1,1])*1E-6]))
-# R = np.diag(np.concatenate([np.array([1E-5,1,1])*1E3,np.array([1,1,1])*1E-11]))
-# R_mag = np.diag(np.concatenate([np.array([1,1,1])*1E5,np.array([1,1,1])*1]))
-# Q0 = np.identity(6) * 0.001
 P0 = np.eye(6)*1E-4
 alpha = 0.1
 K = -1
@@ -243,7 +242,7 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
         true_att = np.asarray([data[1], data[2], data[3], data[4]])
         gyro = np.asarray([data[8],data[9],data[10]])
         accel_measure = np.asarray([-data[5],-data[6],data[7]])
-        mag_measure = np.asarray([data[11],data[12],data[13]])
+        mag_measure = np.asarray([-data[11],0,data[13]])
         # Take the norm of the magnetometer measurement
         mag_measure = mag_measure / np.linalg.norm(mag_measure)            
 
@@ -261,7 +260,7 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
             z_acc, z_acc_measure = state_estimator.update(z=acc_data, z_gyro=gyro, R=R, hx=H_accel, v=np.array([0.01,0.01,0.01]))
             z_acc_mat = np.vstack([z_acc_mat,z_acc])
             z_acc_measure_mat = np.vstack([z_acc_measure_mat,z_acc_measure])
-        # # Update mag
+        # Update mag
         z_mag, z_mag_measure = state_estimator.update(z=mag_measure, z_gyro=gyro, R=R_mag, hx=H_mag, b = mag_0, v=np.array([0,0,0]))
         z_mag_mat = np.vstack([z_mag_mat,z_mag])
         z_mag_measure_mat = np.vstack([z_mag_measure_mat,z_mag_measure])
@@ -313,6 +312,6 @@ fig.update_xaxes(title_text="Time (s)", row=3, col=1)
 fig.show()
 
 
-plot_innovation(t_mat, z_acc_mat,z_acc_measure_mat)
+# plot_innovation(t_mat, z_acc_mat,z_acc_measure_mat)
 # plot_innovation(t_mat, z_mag_mat,z_mag_measure_mat)
 
