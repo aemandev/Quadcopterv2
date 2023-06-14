@@ -195,6 +195,7 @@ def hx(qin,w):
     q_out= qin.quatProd(g.quatProd(qin.conj()))
     return np.concatenate((q_out.q[1:4],w))
 
+
 # q must always be a unit quaternion
 # This means that the first 4 componentso f the state vector are n o longer independent
 # Causes conflicts with concept of Kalman Filter and how now is treated
@@ -253,7 +254,7 @@ data = pd.read_csv('TStick_Test08_Trial3.csv')
 acc_save = np.array([0,0,9.81])
 w_stack = np.array([0,0,0])
 
-
+gyro_bias = np.array([0,0,0])
 with open('TStick_Test08_Trial3.csv') as csvfile:
     reader = csv.reader(csvfile)
     next(reader)
@@ -261,6 +262,13 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
     i = 0
     for row in reader:
         data = [float(x) for x in row[0].split(';')]
+        # if i >= 0 and i <= 300:
+        #     # Accumulated the first 200 data points to get a better estimate of the initial bias
+        #     gyro_bias = gyro_bias + np.asarray([data[8],data[9],data[10]])
+        #     i = i + 1
+        #     if i ==300:
+        #         gyro_bias = gyro_bias / 300
+        #     continue
         if i == 0:
             # Write code to split row into a list of ints
             quaternion = np.array([data[1], data[2], data[3], data[4]])  # Initial estimate of the quaternion
@@ -274,14 +282,15 @@ with open('TStick_Test08_Trial3.csv') as csvfile:
             # number of state variables, process noise, initial state, initial coariance, three tuning paramters, and the iterate function
             state_estimator = UKF(x0, P0, Q0, alpha, K, beta, fx, H_accel, x_mean_fn=None, z_mean_fn=None)
             last_time = 0
-            i = 1
+            i +=1
             continue
+
 
         cur_time = np.asarray(data[0])
         t_mat = np.vstack([t_mat,cur_time])
         dt = cur_time-last_time
         true_att = np.asarray([data[1], data[2], data[3], data[4]])
-        gyro = np.asarray([data[8],data[9],data[10]])
+        gyro = np.asarray([data[8],data[9],data[10]]) - gyro_bias
         accel_measure = np.asarray([-data[5],-data[6],data[7]])
         mag_measure = np.asarray([-data[11],0,data[13]])
         # Take the norm of the magnetometer measurement
