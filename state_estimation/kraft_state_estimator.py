@@ -129,6 +129,7 @@ def fx(x, dt, w, acc):
 
     q_disturbed = Quaternion(q.quatProd(q_delta))
     w_disturbed = x[4:7] + w
+    q_disturbed = q_disturbed.q / np.linalg.norm(q_disturbed.q)
 
     # Concatenate a 0 to the beginning of the the g vector
     acc_prime = Quaternion(np.concatenate([np.array([0]), acc]))
@@ -137,7 +138,7 @@ def fx(x, dt, w, acc):
     v_disturbed = v + acc_body*dt
     r_disturbed =  r + v*dt + .5*acc_body*dt**2
 
-    x_k1 = np.concatenate((q_disturbed.q, w_disturbed, v_disturbed, r_disturbed))
+    x_k1 = np.concatenate((q_disturbed, w_disturbed, v_disturbed, r_disturbed))
     return x_k1
 
 def H_gyro(x, v):
@@ -188,7 +189,7 @@ x0 = np.concatenate((q0, w0, r0, v0))
 # R = np.diag(np.concatenate([np.array([1.22E-02,5.86E-04,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
 # R_mag = np.diag(np.concatenate([np.array([3.87E-2,3.87E-2,2.73E-06]),np.array([1,1,1])*1E-11]))
 
-Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.5])*1E-5,np.array([1,1,1])*1E4, np.array([1.1,1.01,.5])*1E2, np.array([1.1,1.01,.5])*1E2]))
+Q0 = np.diag(np.concatenate([np.array([1.1,1.01,.5])*1E-5,np.array([1,1,1])*1E4, np.array([1.1,1.01,.5])*1E-2, np.array([1.1,1.01,.5])*1E-2]))
 R = np.diag(np.concatenate([np.array([1.22E-02,5.86E-04,3.03E-4]),np.array([4.14E-05,3.45E-05,3.13E-05])]))
 R_mag = np.diag(np.concatenate([np.array([3.87E-2,3.87E-2,2.73E-06]),np.array([1,1,1])*1E-11]))
 

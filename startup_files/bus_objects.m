@@ -268,6 +268,46 @@ body_rates.Elements = elems;
 clear elems;
 assignin('base','body_rates', body_rates);
 
+% Bus object: Body Acceleration
+clear elems
+elems(1) = Simulink.BusElement;
+elems(1).Name = 'a_x';
+elems(1).Dimensions = 1;
+elems(1).DimensionsMode = 'Fixed';
+elems(1).DataType = 'single';
+elems(1).SampleTime = -1;
+elems(1).Complexity = 'real';
+elems(1).DocUnits = '';
+elems(1).Description = '';
+
+elems(2) = Simulink.BusElement;
+elems(2).Name = 'a_y';
+elems(2).Dimensions = 1;
+elems(2).DimensionsMode = 'Fixed';
+elems(2).DataType = 'single';
+elems(2).SampleTime = -1;
+elems(2).Complexity = 'real';
+elems(2).DocUnits = '';
+elems(2).Description = '';
+
+elems(3) = Simulink.BusElement;
+elems(3).Name = 'a_z';
+elems(3).Dimensions = 1;
+elems(3).DimensionsMode = 'Fixed';
+elems(3).DataType = 'single';
+elems(3).SampleTime = -1;
+elems(3).Complexity = 'real';
+elems(3).DocUnits = '';
+elems(3).Description = '';
+
+accel_body = Simulink.Bus;
+accel_body.Description = '';
+accel_body.DataScope = 'Auto';
+accel_body.Alignment = -1;
+accel_body.Elements = elems;
+clear elems;
+assignin('base','accel_body', accel_body);
+
 % Bus object: LLA
 clear elems
 elems(1) = Simulink.BusElement;
@@ -449,3 +489,33 @@ clear elems;
 assignin('base','reference_signals', reference_signals);
 
 
+
+% Bus object: Sensor Outputs
+clear elems
+elems(1) = Simulink.BusElement;
+elems(1).Name = 'wb';
+elems(1).Dimensions = 1;
+elems(1).DimensionsMode = 'Fixed';
+elems(1).DataType = 'Bus: body_rates';
+elems(1).SampleTime = -1;
+elems(1).Complexity = 'real';
+elems(1).DocUnits = '';
+elems(1).Description = '';
+
+elems(2) = Simulink.BusElement;
+elems(2).Name = 'a_body';
+elems(2).Dimensions = 1;
+elems(2).DimensionsMode = 'Fixed';
+elems(2).DataType = 'Bus: accel_body';
+elems(2).SampleTime = -1;
+elems(2).Complexity = 'real';
+elems(2).DocUnits = '';
+elems(2).Description = '';
+
+sensor_outputs = Simulink.Bus;
+sensor_outputs.Description = '';
+sensor_outputs.DataScope = 'Auto';
+sensor_outputs.Alignment = -1;
+sensor_outputs.Elements = elems;
+clear elems;
+assignin('base','sensor_outputs', sensor_outputs);
