@@ -148,7 +148,7 @@ class UKF:
 
         w_W = self.sigmas_f[:,4::] - w_av
         quat_conj = quat_av.conj()
-        r_W = np.zeros((12,3))
+        r_W = np.zeros((self.num_sig,3))
         for i, s in enumerate(self.sigmas_f):
             quat = Quaternion(s[0:4])
             r_W[i,0:3] = self.quat2vec(quat.quatProd(quat_conj))
@@ -177,7 +177,7 @@ class UKF:
         # Pass the sigma points through the measurement function
         sigmas_h = []
         for s in self.sigmas_f:
-            sigmas_h.append(np.append(hx(s,**hx_args)[1::],s[4::]))
+            sigmas_h.append(np.append(hx(s,**hx_args)[1::],s[4:7]))
 
         self.sigmas_h = np.atleast_2d(sigmas_h)
 
