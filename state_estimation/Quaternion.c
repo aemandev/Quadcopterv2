@@ -1,12 +1,15 @@
-typedef struct {
-    float w;
-    float x;
-    float y;
-    float z;
-} quaternion_t;
+#include "Quaternion.h"
+#include <stdlib.h>
+
+// typedef struct {
+//     float w;
+//     float x;
+//     float y;
+//     float z;
+// } quaternion_t;
 
 // Create new pointer to quaternion
-quaternion_t* quaternion_new(float w, float x, float y, float z) {
+quaternion_new(float w, float x, float y, float z) {
     quaternion_t* q = malloc(sizeof(quaternion_t));
     q->w = w;
     q->x = x;

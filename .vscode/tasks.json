@@ -1,13 +1,22 @@
 {
     "tasks": [
         {
+            "label": "build-unit-test",
+            "type": "shell",
+            "command": "cd ${fileDirname}/../build/ && cmake .. &&  make ${fileBasenameNoExtension}",
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "type": "cppbuild",
             "label": "C/C++: g++ build active file",
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${workspaceFolder}/*.cpp",
+                "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
