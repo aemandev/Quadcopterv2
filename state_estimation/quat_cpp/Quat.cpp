@@ -103,7 +103,7 @@ Quat Quat::operator-(const Quat &q2) const
 std::vector<float> Quat::rotate_vector(std::vector<float>& v)
 {
     Quat v2(0, v[0], v[1], v[2]);
-    Quat qOut = *this * (v2 * this->inverse());
+    Quat qOut = this->inverse() * (v2 * *this);
     std::vector<float> vOut = {qOut.x, qOut.y, qOut.z};
     return vOut;
 }

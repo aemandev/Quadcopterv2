@@ -1,7 +1,4 @@
 import numpy as np
-import filterpy
-from filterpy.kalman import MerweScaledSigmaPoints, UnscentedKalmanFilter
-from filterpy.common import Q_discrete_white_noise
 from Quaternion import Quaternion
 # I want to import the module "UKF_general" from the "state_estimation" folder
 import sys
@@ -11,13 +8,13 @@ from UKF_general import UKF
 import pandas as pd
 import csv
 import math
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+# from plotly.subplots import make_subplots
+# import plotly.graph_objects as go
 import pandas as pd
 import csv
 import math
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+# from plotly.subplots import make_subplots
+# import plotly.graph_objects as go
 
 
 # def plot_sensor_data():
@@ -248,6 +245,9 @@ z_acc_mat = np.array([0,0,0,0,0,0])
 z_mag_mat = np.array([0,0,0,0,0,0]) 
 z_acc_measure_mat = np.array([0,0,0,0,0,0])
 z_mag_measure_mat = np.array([0,0,0,0,0,0])
+
+x0 = np.array([1,0,0,0,0,0,0])
+state_estimator = UKF(x0, P0, Q0, alpha, K, beta, fx, H_accel, x_mean_fn=None, z_mean_fn=None)
 
 data = pd.read_csv('TStick_Test08_Trial3.csv')
 
